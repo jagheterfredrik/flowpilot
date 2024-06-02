@@ -4,6 +4,7 @@ import math
 
 from cereal import car
 from common.conversions import Conversions as CV
+from common.params import Params
 from opendbc.can.parser import CANParser
 from opendbc.can.can_define import CANDefine
 from selfdrive.car.hyundai.hyundaicanfd import CanBus
@@ -18,6 +19,7 @@ CLUSTER_SAMPLE_RATE = 20  # frames
 class CarState(CarStateBase):
   def __init__(self, CP):
     super().__init__(CP)
+    self.Options = Params()
     can_define = CANDefine(DBC[CP.carFingerprint]["pt"])
 
     self.cruise_buttons = 0
