@@ -111,6 +111,52 @@ def create_lkas11(packer, frame, car_fingerprint, apply_steer, steer_req,
 
   return packer.make_can_msg("LKAS11", 0, values)
 
+def create_lkas11_no_lkas_eq(packer, frame, car_fingerprint, apply_steer, steer_req,
+                  torque_fault, sys_warning, sys_state, enabled,
+                  left_lane, right_lane,
+                  left_lane_depart, right_lane_depart):
+  values = {
+    "CF_Lkas_LdwsSysState": sys_state,
+    "CF_Lkas_SysWarning": 3 if sys_warning else 0,
+    "CF_Lkas_LdwsLHWarning": left_lane_depart,
+    "CF_Lkas_LdwsRHWarning": right_lane_depart,
+    "CR_Lkas_StrToqReq": apply_steer,
+    "CF_Lkas_ActToi": steer_req,
+    "CF_Lkas_ToiFlt": torque_fault,  # seems to allow actuation on CR_Lkas_StrToqReq
+    "CF_Lkas_MsgCount": frame % 0x10,
+  }
+
+  # SysWarning 4 = keep hands on wheel + beep
+  values["CF_Lkas_SysWarning"] = 4 if sys_warning else 0
+
+  # SysState 0 = no icons
+  # SysState 1-2 = white car + lanes
+  # SysState 3 = green car + lanes, green steering wheel
+  # SysState 4 = green car + lanes
+  values["CF_Lkas_LdwsSysState"] = 3 if enabled else 1
+  values["CF_Lkas_LdwsOpt_USM"] = 2  # non-2 changes above SysState definition
+
+  # these have no effect
+  values["CF_Lkas_LdwsActivemode"] = 0
+  values["CF_Lkas_FcwOpt_USM"] = 0
+
+  dat = packer.make_can_msg("LKAS11", 0, values)[2]
+
+  if car_fingerprint in CHECKSUM["crc8"]:
+    # CRC Checksum as seen on 2019 Hyundai Santa Fe
+    dat = dat[:6] + dat[7:8]
+    checksum = hyundai_checksum(dat)
+  elif car_fingerprint in CHECKSUM["6B"]:
+    # Checksum of first 6 Bytes, as seen on 2018 Kia Sorento
+    checksum = sum(dat[:6]) % 256
+  else:
+    # Checksum of first 6 Bytes and last Byte as seen on 2018 Kia Stinger
+    checksum = (sum(dat[:6]) + dat[7]) % 256
+
+  values["CF_Lkas_Chksum"] = checksum
+
+  return packer.make_can_msg("LKAS11", 0, values)
+
 
 def create_clu11(packer, frame, clu11, button):
   values = clu11

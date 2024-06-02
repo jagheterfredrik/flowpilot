@@ -137,6 +137,10 @@ public class SettingsScreen extends ScreenAdapter {
         AdditionalToggles.add("SensitiveSlow");
         AdditionalToggles.add("Always Use Model Path");
         AdditionalToggles.add("UseModelPath");
+        AdditionalToggles.add("HKG Cruise Spamming");
+        AdditionalToggles.add("CruiseSpamming");
+        AdditionalToggles.add("HKG LKAS Not Equipped");
+        AdditionalToggles.add("HKGNoLKAS");
 
         stage = new Stage(new FitViewport(1280, 720));
         batch = new SpriteBatch();
