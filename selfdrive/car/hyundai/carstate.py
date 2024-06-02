@@ -19,7 +19,6 @@ CLUSTER_SAMPLE_RATE = 20  # frames
 class CarState(CarStateBase):
   def __init__(self, CP):
     super().__init__(CP)
-    self.Options = Params()
     can_define = CANDefine(DBC[CP.carFingerprint]["pt"])
 
     self.cruise_buttons = 0
@@ -365,8 +364,8 @@ class CarState(CarStateBase):
       checks.append(("LVR12", 100))
 
     return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, 0)
-    
-  if not self.Options.get_bool("HKGNoLKAS"):
+
+  if not Params().get_bool("HKGNoLKAS"):
     @staticmethod
     def get_cam_can_parser(CP):
       if CP.carFingerprint in CANFD_CAR:

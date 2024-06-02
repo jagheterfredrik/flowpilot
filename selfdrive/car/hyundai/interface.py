@@ -252,8 +252,8 @@ class CarInterface(CarInterfaceBase):
     ret.openpilotLongitudinalControl = False #experimental_long and ret.experimentalLongitudinalAvailable
     ret.pcmCruise = not ret.openpilotLongitudinalControl
 
-    ret.stoppingControl = True
-    ret.startingState = True
+    ret.stoppingControl = False
+    ret.startingState = False
     ret.vEgoStarting = 0.1
     ret.startAccel = 1.0
     ret.longitudinalActuatorDelayLowerBound = 0.5
