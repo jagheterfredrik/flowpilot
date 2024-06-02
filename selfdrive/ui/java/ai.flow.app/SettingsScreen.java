@@ -137,6 +137,8 @@ public class SettingsScreen extends ScreenAdapter {
         AdditionalToggles.add("SensitiveSlow");
         AdditionalToggles.add("Always Use Model Path");
         AdditionalToggles.add("UseModelPath");
+        AdditionalToggles.add("Auto Lane Change/NudgeLess");
+        AdditionalToggles.add("Nudgeless");
         AdditionalToggles.add("HKG Cruise Spamming");
         AdditionalToggles.add("CruiseSpamming");
         AdditionalToggles.add("HKG LKAS Not Equipped");

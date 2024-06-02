@@ -2,6 +2,7 @@ from cereal import log
 from common.conversions import Conversions as CV
 from common.realtime import DT_MDL
 from common.logger import sLogger
+from common.params import Params
 
 LaneChangeState = log.LateralPlan.LaneChangeState
 LaneChangeDirection = log.LateralPlan.LaneChangeDirection
@@ -40,6 +41,7 @@ class DesireHelper:
     self.keep_pulse_timer = 0.0
     self.prev_one_blinker = False
     self.desire = log.LateralPlan.Desire.none
+    self.Options = Params()
 
   def update(self, carstate, lateral_active, lane_change_prob):
     v_ego = carstate.vEgo
@@ -68,6 +70,9 @@ class DesireHelper:
         torque_applied = carstate.steeringPressed and \
                          ((carstate.steeringTorque > 0 and self.lane_change_direction == LaneChangeDirection.left) or
                           (carstate.steeringTorque < 0 and self.lane_change_direction == LaneChangeDirection.right))
+        
+        if self.Options.get_bool("Nudgeless"):
+          torque_applied = True
 
         if not one_blinker or below_lane_change_speed:
           self.lane_change_state = LaneChangeState.off

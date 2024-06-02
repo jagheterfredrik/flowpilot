@@ -89,7 +89,8 @@ def main():
                         ("WideCameraOnly", "1"),
                         ("UbloxAvailable", "1"),
                         ("CruiseSpamming", "0"),
-                        ("HKGNoLKAS", "0")
+                        ("HKGNoLKAS", "0"),
+                        ("Nudgeless", "1")
                          ]
 
         if params.get_bool("RecordFrontLock"):
