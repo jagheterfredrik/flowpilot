@@ -1,6 +1,7 @@
 import yaml
 import os
 import time
+import datetime
 from abc import abstractmethod, ABC
 from typing import Any, Dict, Optional, Tuple, List, Callable
 
@@ -233,8 +234,7 @@ class CarInterfaceBase(ABC):
   def apply(self, c: car.CarControl, sm, now_nanos: int) -> Tuple[car.CarControl.Actuators, List[bytes]]:
     pass
 
-  def create_common_events(self, cs_out, extra_gears=None, pcm_enable=True, allow_enable=True,
-                           enable_buttons=(ButtonType.accelCruise, ButtonType.decelCruise)):
+  def create_common_events(self, cs_out, extra_gears=None, pcm_enable=True, allow_enable=True):
     events = Events()
 
     if cs_out.doorOpen:
@@ -246,8 +246,8 @@ class CarInterfaceBase(ABC):
       events.add(EventName.wrongGear)
     if cs_out.gearShifter == GearShifter.reverse:
       events.add(EventName.reverseGear)
-    if not cs_out.cruiseState.available:
-      events.add(EventName.wrongCarMode)
+    # if not cs_out.cruiseState.available:
+    #   events.add(EventName.wrongCarMode)
     if cs_out.espDisabled:
       events.add(EventName.espDisabled)
     if cs_out.stockFcw:
@@ -256,8 +256,8 @@ class CarInterfaceBase(ABC):
       events.add(EventName.stockAeb)
     if cs_out.vEgo > MAX_CTRL_SPEED:
       events.add(EventName.speedTooHigh)
-    if cs_out.cruiseState.nonAdaptive:
-      events.add(EventName.wrongCruiseMode)
+    # if cs_out.cruiseState.nonAdaptive:
+    #   events.add(EventName.wrongCruiseMode)
     if cs_out.brakeHoldActive and self.CP.openpilotLongitudinalControl:
       events.add(EventName.brakeHold)
     if cs_out.parkingBrake:
@@ -267,14 +267,15 @@ class CarInterfaceBase(ABC):
     if cs_out.steeringPressed:
       events.add(EventName.steerOverride)
 
-    # Handle button presses
+    # Handle button presses and enabling Open Pilot
     for b in cs_out.buttonEvents:
-      # Enable OP long on falling edge of enable buttons (defaults to accelCruise and decelCruise, overridable per-port)
-      if not self.CP.pcmCruise and (b.type in enable_buttons and not b.pressed):
-        events.add(EventName.buttonEnable)
-      # Disable on rising and falling edge of cancel for both stock and OP long
+      if b.type == ButtonType.decelCruise:
+        self.CS.openPilotEnabled = True
+        events.add(EventName.pcmEnable)
       if b.type == ButtonType.cancel:
-        events.add(EventName.buttonCancel)
+        self.CS.openPilotEnabled = False
+        self.CS.time_cruise_cancelled = datetime.datetime(2000, 10, 1, 1, 1, 1, 0)
+        events.add(EventName.pcmDisable)
 
     # Handle permanent and temporary steering faults
     self.steering_unpressed = 0 if cs_out.steeringPressed else self.steering_unpressed + 1
@@ -296,13 +297,13 @@ class CarInterfaceBase(ABC):
     if cs_out.steerFaultPermanent:
       events.add(EventName.steerUnavailable)
 
-    # we engage when pcm is active (rising edge)
-    # enabling can optionally be blocked by the car interface
-    if pcm_enable:
-      if cs_out.cruiseState.enabled and not self.CS.out.cruiseState.enabled and allow_enable:
-        events.add(EventName.pcmEnable)
-      elif not cs_out.cruiseState.enabled:
-        events.add(EventName.pcmDisable)
+    # # we engage when pcm is active (rising edge)
+    # # enabling can optionally be blocked by the car interface
+    # if pcm_enable:
+    #   if cs_out.cruiseState.enabled and not self.CS.out.cruiseState.enabled and allow_enable:
+    #     events.add(EventName.pcmEnable)
+    #   elif not cs_out.cruiseState.enabled:
+    #     events.add(EventName.pcmDisable)
 
     return events
 
