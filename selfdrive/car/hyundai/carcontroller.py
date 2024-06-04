@@ -154,9 +154,10 @@ class CarController:
     if lat_active and steering_amount >= MAX_ANGLE and CS.out.steeringPressed:
       lat_active = False
 
-    # if self.frame == 0: # initialize counts from last received count signals
-    #   self.lkas11_cnt = CS.lkas11["CF_Lkas_MsgCount"] + 1
-    # self.lkas11_cnt %= 0x10
+    if not self.Options.get_bool("HKGNoLKAS"):
+      if self.frame == 0: # initialize counts from last received count signals
+        self.lkas11_cnt = CS.lkas11["CF_Lkas_MsgCount"] + 1
+      self.lkas11_cnt %= 0x10
 
     if self.angle_limit_counter >= MAX_ANGLE_FRAMES + MAX_ANGLE_CONSECUTIVE_FRAMES:
       self.angle_limit_counter = 0

@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
@@ -35,6 +36,7 @@ public class SettingsScreen extends ScreenAdapter {
             buttonTraining, buttonPowerOff, buttonReboot, buttonSoftware,
             buttonUninstall, buttonToggle, buttonCheckUpdate, buttonLogOut,
             buttonVehicles;
+    TextField txfDegOffset;
     ImageButton closeButton;
     SelectBox<String> carBrandSelectBox;
     SpriteBatch batch;
@@ -42,6 +44,7 @@ public class SettingsScreen extends ScreenAdapter {
     Texture lineTex = Utils.getLineTexture(700, 1, Color.WHITE);
     ScrollPane scrollPane;
     Dialog dialog;
+    Double steeringOffset;
     public java.util.List<String> AdditionalToggles = new java.util.ArrayList<>();
     public java.util.List<TextButton> ToggleButtons = new ArrayList<>();
 
@@ -68,6 +71,12 @@ public class SettingsScreen extends ScreenAdapter {
     }
 
     public void addKeyValueTable(Table table, String key, SelectBox<String> value, boolean addLine) {
+        table.add(new Label(key, appContext.skin, "default-font", "white")).left().pad(30);
+        table.add(value).right().pad(30);
+        table.row();
+    }
+
+    public void addKeyValueTable(Table table, String key, TextField value, boolean addLine) {
         table.add(new Label(key, appContext.skin, "default-font", "white")).left().pad(30);
         table.add(value).right().pad(30);
         table.row();
@@ -108,9 +117,21 @@ public class SettingsScreen extends ScreenAdapter {
 
     public void fillToggleSettings(){
         currentSettingTable.clear();
+        this.steeringOffset = 0.0;
         for (int i=0; i<ToggleButtons.size(); i++) {
             addKeyValueTable(currentSettingTable, AdditionalToggles.get(i*2), ToggleButtons.get(i), true);
         }
+        txfDegOffset = new TextField(String.valueOf(steeringOffset), appContext.skin);
+        txfDegOffset.setMessageText(" 0+");
+        addKeyValueTable(currentSettingTable, "Steering Offset", txfDegOffset, true);
+        txfDegOffset.addListener(
+                new InputListener() {
+                    @Override
+                    public void input(InputEvent event) {
+
+                    }
+                }
+        );
     }
 
     public void fillVehiclesSettings(){

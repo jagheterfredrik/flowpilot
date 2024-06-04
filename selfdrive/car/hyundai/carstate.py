@@ -94,8 +94,7 @@ class CarState(CarStateBase):
     ret.vEgoCluster = self.cluster_speed * speed_conv
     ret.engineRpm = cp.vl["ELECT_GEAR"]["Elect_Gear_Step"]
 
-    ret.steeringAngleDeg = cp.vl["SAS11"]["SAS_Angle"] #+ 2.0 # kona ev steering offset
-    ret.steeringAngleOffsetDeg = -27.0
+    ret.steeringAngleDeg = cp.vl["SAS11"]["SAS_Angle"] - 27.0 # kona ev steering offset
     ret.steeringRateDeg = cp.vl["SAS11"]["SAS_Speed"]
     ret.yawRate = cp.vl["ESP12"]["YAW_RATE"]
     ret.leftBlinker, ret.rightBlinker = self.update_blinker_from_lamp(
@@ -159,7 +158,9 @@ class CarState(CarStateBase):
       ret.cruiseState.nonAdaptive = 0 <= seconds_from_cancel < 7.0
 
     # save the entire LKAS11 and CLU11
-    # self.lkas11 = copy.copy(cp_cam.vl["LKAS11"])
+    if not Params().get_bool("HKGNoLKAS"):
+      self.lkas11 = copy.copy(cp_cam.vl["LKAS11"])
+
     self.clu11 = copy.copy(cp.vl["CLU11"])
     self.mdps12 = copy.copy(cp.vl["MDPS12"])
     self.elect = copy.copy(cp.vl["ELECT_GEAR"])
