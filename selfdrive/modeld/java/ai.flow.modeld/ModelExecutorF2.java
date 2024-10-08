@@ -1,6 +1,6 @@
 package ai.flow.modeld;
 
-import ai.flow.common.ParamsInterface;
+import ai.flow.common.ParamsJNI;
 import ai.flow.common.transformations.Camera;
 import ai.flow.common.utils;
 import ai.flow.definitions.Definitions;
@@ -54,7 +54,7 @@ public class ModelExecutorF2 extends ModelExecutor {
     public final Map<String, float[]> outputMap =  new HashMap<>();
     public final Parser parser = new Parser();
 
-    public final ParamsInterface params = ParamsInterface.getInstance();
+    public final ParamsJNI params = new ParamsJNI();
 
     public static final int[] FULL_FRAME_SIZE = Camera.frameSize;
     public final ZMQPubHandler ph = new ZMQPubHandler();

@@ -39,7 +39,7 @@ public:
     for (auto &input : inputs) {
       if (name == input->name) {
         input->setBuffer(buffer, size);
-        printf("Input set: %s @ %p %d\n", name.c_str(), buffer, size);
+        // printf("Input set: %s @ %p %d\n", name.c_str(), buffer, size);
         return;
       }
     }

@@ -1,6 +1,6 @@
 package ai.flow.app;
 
-import ai.flow.common.ParamsInterface;
+import ai.flow.common.ParamsJNI;
 import ai.flow.common.Path;
 import ai.flow.hardware.HardwareManager;
 import ai.flow.launcher.Launcher;
@@ -36,7 +36,7 @@ public class FlowUI extends Game {
     // reuse common screens
     public SettingsScreen settingsScreen;
     public OnRoadScreen onRoadScreen;
-    public ParamsInterface params = ParamsInterface.getInstance();
+    public ParamsJNI params = new ParamsJNI();
     public boolean isOnRoad = false;
     public boolean prevIsOnRoad = false;
     public Thread updateOnroadThread;
@@ -58,7 +58,7 @@ public class FlowUI extends Game {
             @Override
             public void run() {
                 while (!Thread.interrupted()){
-                    isOnRoad = params.existsAndCompare("IsOnroad", true);
+                    isOnRoad = params.getBool("IsOnroad", true);
                     try {
                         Thread.sleep(50);
                     } catch (InterruptedException e) {
@@ -126,7 +126,7 @@ public class FlowUI extends Game {
 
     @Override
     public void create() {
-        params.putInt("FlowpilotPID", pid);
+        params.put("FlowpilotPID", Integer.toString(pid));
 
         updateOnroadThread.start();
 
@@ -160,6 +160,5 @@ public class FlowUI extends Game {
             font.dispose();
             launcher.dispose();
         }
-        params.dispose();
     }
 }

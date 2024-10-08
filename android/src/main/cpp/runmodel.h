@@ -39,7 +39,7 @@ public:
     for (auto &input : inputs) {
       if (name == input->name) {
         input->setBuffer(buffer, size);
-        __android_log_print(ANDROID_LOG_ERROR, "SETINPUT", "Input set: %s @ %p %d", name.c_str(), buffer, size);
+        // __android_log_print(ANDROID_LOG_ERROR, "SETINPUT", "Input set: %s @ %p %d", name.c_str(), buffer, size);
         return;
       }
     }

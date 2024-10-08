@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">flow-pilot</string>
+    <string name="private_version">88888882153a018887b1030905d852da1af7d7eb</string>
 </resources>

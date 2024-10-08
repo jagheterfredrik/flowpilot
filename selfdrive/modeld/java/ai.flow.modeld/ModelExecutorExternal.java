@@ -20,7 +20,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import ai.flow.common.ParamsInterface;
+import ai.flow.common.ParamsJNI;
 import ai.flow.common.transformations.Camera;
 import ai.flow.common.utils;
 import ai.flow.definitions.Definitions;
@@ -40,7 +40,7 @@ public class ModelExecutorExternal extends ModelExecutor {
 
     public static int[] imgTensorShape = {1, 12, 128, 256};
 
-    public final ParamsInterface params = ParamsInterface.getInstance();
+    public final ParamsJNI params = new ParamsJNI();
 
     public static final int[] FULL_FRAME_SIZE = Camera.frameSize;
     public final ZMQSubHandler sh = new ZMQSubHandler(true);

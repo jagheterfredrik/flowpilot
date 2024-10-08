@@ -17,7 +17,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import ai.flow.app.CalibrationScreens.CalibrationInfo;
-import ai.flow.common.ParamsInterface;
+import ai.flow.common.ParamsJNI;
 import ai.flow.common.SystemUtils;
 import ai.flow.common.utils;
 
@@ -29,7 +29,7 @@ import java.util.ArrayList;
 public class SettingsScreen extends ScreenAdapter {
 
     FlowUI appContext;
-    ParamsInterface params = ParamsInterface.getInstance();
+    ParamsJNI params = new ParamsJNI();
     Stage stage;
     TextButton buttonDevice, buttonCalibrate, buttonWideCalibrate, buttonCalibrateExtrinsic,
             buttonTraining, buttonPowerOff, buttonReboot, buttonSoftware,
@@ -75,11 +75,11 @@ public class SettingsScreen extends ScreenAdapter {
 
     public void fillDeviceSettings(){
         currentSettingTable.clear();
-        String dongleID = params.exists("DongleId") ? params.getString("DongleId") : "N/A";
+        String dongleID = params.exists("DongleId") ? params.get("DongleId") : "N/A";
         addKeyValueTable(currentSettingTable, "Dongle ID", dongleID, true);
-        String deviceManufacturer = params.exists("DeviceManufacturer") ? params.getString("DeviceManufacturer") : "";
+        String deviceManufacturer = params.exists("DeviceManufacturer") ? params.get("DeviceManufacturer") : "";
         addKeyValueTable(currentSettingTable, "Device Manufacturer", deviceManufacturer, true);
-        String deviceModel = params.exists("DeviceModel") ? params.getString("DeviceModel") : "";
+        String deviceModel = params.exists("DeviceModel") ? params.get("DeviceModel") : "";
         addKeyValueTable(currentSettingTable, "Device Name", deviceModel, true);
         addKeyValueTable(currentSettingTable, "Log Out", buttonLogOut, true);
         addKeyValueTable(currentSettingTable, "Reset Extrinsic Calibration", buttonCalibrateExtrinsic, true);
@@ -90,16 +90,16 @@ public class SettingsScreen extends ScreenAdapter {
 
     public void fillSoftwareSettings(){
         currentSettingTable.clear();
-        String version = params.exists("Version") ? "flowpilot v" + params.getString("Version") : "";
+        String version = params.exists("Version") ? "flowpilot v" + params.get("Version") : "";
         addKeyValueTable(currentSettingTable, "Version", version, true);
 
         addKeyValueTable(currentSettingTable, "Last Updated", "", true);
         addKeyValueTable(currentSettingTable, "Check For Update", buttonCheckUpdate, true);
 
-        String branch = params.exists("GitBranch") ? params.getString("GitBranch") : "";
+        String branch = params.exists("GitBranch") ? params.get("GitBranch") : "";
         addKeyValueTable(currentSettingTable, "Git Branch", branch, true);
 
-        String commit = params.exists("GitCommit") ? params.getString("GitCommit").substring(0, 10) : "";
+        String commit = params.exists("GitCommit") ? params.get("GitCommit").substring(0, 10) : "";
         addKeyValueTable(currentSettingTable, "Git Commit", commit, true);
 
         addKeyValueTable(currentSettingTable, "Device Type", SystemUtils.getPlatform(), true);
@@ -266,8 +266,8 @@ public class SettingsScreen extends ScreenAdapter {
                 dialog = new Dialog("confirm", appContext.skin) {
                             public void result(Object obj) {
                                 if (obj.equals(true)) {
-                                    params.deleteKey("UserID");
-                                    params.deleteKey("UserToken");
+                                    params.remove("UserID");
+                                    params.remove("UserToken");
                                     dialog.hide();
                                 }
                             }
@@ -320,7 +320,7 @@ public class SettingsScreen extends ScreenAdapter {
         String[] carArray = allCars.split("\n");
         carBrandSelectBox = new SelectBox<>(appContext.skin);
         carBrandSelectBox.setItems(carArray);
-        String mycar = params.exists("Mycar") ? params.getString("Mycar"): "";
+        String mycar = params.exists("Mycar") ? params.get("Mycar"): "";
         carBrandSelectBox.setSelected(mycar);
         carBrandSelectBox.addListener(new ChangeListener(){
             @Override

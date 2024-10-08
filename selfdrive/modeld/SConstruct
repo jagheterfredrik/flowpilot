@@ -1,0 +1,194 @@
+import os
+import subprocess
+import sys
+import sysconfig
+import platform
+
+import SCons.Errors
+
+SCons.Warnings.warningAsException(True)
+
+# pending upstream fix - https://github.com/SCons/scons/issues/4461
+#SetOption('warn', 'all')
+
+TICI = False
+AGNOS = TICI
+
+Decider('MD5-timestamp')
+
+SetOption('num_jobs', int(os.cpu_count()/2))
+
+AddOption('--kaitai',
+          action='store_true',
+          help='Regenerate kaitai struct parsers')
+
+AddOption('--asan',
+          action='store_true',
+          help='turn on ASAN')
+
+AddOption('--ubsan',
+          action='store_true',
+          help='turn on UBSan')
+
+AddOption('--coverage',
+          action='store_true',
+          help='build with test coverage options')
+
+AddOption('--clazy',
+          action='store_true',
+          help='build with clazy')
+
+AddOption('--compile_db',
+          action='store_true',
+          help='build clang compilation database')
+
+AddOption('--ccflags',
+          action='store',
+          type='string',
+          default='',
+          help='pass arbitrary flags over the command line')
+
+AddOption('--snpe',
+          action='store_true',
+          help='use SNPE on PC')
+
+AddOption('--external-sconscript',
+          action='store',
+          metavar='FILE',
+          dest='external_sconscript',
+          help='add an external SConscript to the build')
+
+AddOption('--pc-thneed',
+          action='store_true',
+          dest='pc_thneed',
+          help='use thneed on pc')
+
+AddOption('--minimal',
+          action='store_false',
+          dest='extras',
+          default=os.path.exists(File('#.lfsconfig').abspath), # minimal by default on release branch (where there's no LFS)
+          help='the minimum build to run openpilot. no tests, tools, etc.')
+
+## Architecture name breakdown (arch)
+## - larch64: linux tici aarch64
+## - aarch64: linux pc aarch64
+## - x86_64:  linux pc x64
+## - Darwin:  mac x64 or arm64
+real_arch = arch = 'aarch64'
+
+lenv = {
+  "PATH": "/home/fgx/.buildozer/android/platform/android-ndk-r25b/toolchains/llvm/prebuilt/linux-x86_64/bin/:/home/fgx/p4a2/venv/bin:/bin", #os.environ['PATH'],
+  "LD_LIBRARY_PATH": ["/home/fgx/p4a2/.buildozer/android/platform/build-arm64-v8a/build/libs_collections/oscservice/arm64-v8a"],
+  "PYTHONPATH": Dir("#").abspath + ':' + Dir(f"#third_party/acados").abspath,
+
+  "ACADOS_SOURCE_DIR": Dir("#third_party/acados").abspath,
+  "ACADOS_PYTHON_INTERFACE_PATH": Dir("#third_party/acados/acados_template").abspath,
+  "TERA_PATH": Dir("#").abspath + f"/third_party/acados/x86_64/t_renderer"
+}
+
+cflags = ["--target=aarch64-linux-android31"]
+cxxflags = ["--target=aarch64-linux-android31"]
+cpppath = []
+rpath = [] #lenv["LD_LIBRARY_PATH"].copy()
+
+libpath = [
+  # f"#third_party/acados/{arch}/lib",
+  # f"#third_party/libyuv/{arch}/lib",
+
+  # "/usr/lib",
+  # "/usr/local/lib",
+]
+
+
+if GetOption('asan'):
+  ccflags = ["-fsanitize=address", "-fno-omit-frame-pointer"]
+  ldflags = ["-fsanitize=address"]
+elif GetOption('ubsan'):
+  ccflags = ["-fsanitize=undefined"]
+  ldflags = ["-fsanitize=undefined"]
+else:
+  ccflags = []
+  ldflags = ['-llog']
+
+# Enable swaglog include in submodules
+cflags += ['-DSWAGLOG="\\"common/swaglog.h\\""']
+cxxflags += ['-DSWAGLOG="\\"common/swaglog.h\\""']
+
+ccflags_option = GetOption('ccflags')
+if ccflags_option:
+  ccflags += ccflags_option.split(' ')
+
+env = Environment(
+  ENV=lenv,
+  CCFLAGS=[
+    "-g",
+    "-fPIC",
+    "-O2",
+    "-Wunused",
+    "-Werror",
+    "-Wshadow",
+    "-Wno-unknown-warning-option",
+    "-Wno-deprecated-register",
+    "-Wno-register",
+    "-Wno-inconsistent-missing-override",
+    "-Wno-c99-designator",
+    "-Wno-reorder-init-list",
+    "-Wno-error=unused-but-set-variable",
+    "-Wno-vla-cxx-extension",
+  ] + cflags + ccflags,
+
+  CPPPATH=cpppath + [
+    "#",
+    "#third_party/acados/include",
+    "#third_party/acados/include/blasfeo/include",
+    "#third_party/acados/include/hpipm/include",
+    "#third_party/catch2/include",
+    "#third_party/libusb",
+    "#third_party/libyuv/include",
+    "#third_party/json11",
+    "#third_party/linux/include",
+    "#third_party/snpe/include",
+    "#third_party/qrcode",
+    "#third_party",
+    "#cereal",
+    "#msgq",
+    "#opendbc/can",
+    "/home/fgx/p4a2/.buildozer/android/platform/build-arm64-v8a/build/other_builds/capnp/arm64-v8a__ndk_target_24/capnp/c++/src/",
+    "/home/fgx/p4a2/.buildozer/android/platform/build-arm64-v8a/build/other_builds/libzmq/arm64-v8a__ndk_target_24/libzmq/include/",
+    "/home/fgx/p4a2/.buildozer/android/platform/build-arm64-v8a/build/other_builds/python3/arm64-v8a__ndk_target_24/python3/Include/",
+    "/home/fgx/p4a2/.buildozer/android/platform/build-arm64-v8a/build/python-installs/oscservice/arm64-v8a/numpy/core/include/",
+  ],
+
+  CC='clang --target=aarch64-linux-android24',
+  CXX='clang++ --target=aarch64-linux-android24 -I../../',
+  LINKFLAGS=ldflags,
+  AR='llvm-ar',
+  RANLIB='llvm-ranlib',
+
+  RPATH=rpath,
+
+  CFLAGS=["-std=gnu11"] + cflags,
+  CXXFLAGS=["-std=c++1z"] + cxxflags,
+  LIBPATH=libpath + [
+    "#msgq_repo",
+    "#third_party",
+    "#third_party/json11",
+    "#third_party/libusb/android/libs/arm64-v8a",
+    "#selfdrive/pandad",
+    "#common",
+    "#rednose/helpers",
+    "/home/fgx/.buildozer/android/platform/android-ndk-r25b/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib",
+    "/home/fgx/p4a2/.buildozer/android/platform/build-arm64-v8a/build/libs_collections/oscservice/arm64-v8a",
+    "/home/fgx/p4a2/.buildozer/android/platform/build-arm64-v8a/build/other_builds/python3/arm64-v8a__ndk_target_24/python3/android-build",
+    "/home/fgx/.buildozer/android/platform/android-ndk-r25b/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/32",
+  ],
+  CYTHONCFILESUFFIX=".cpp",
+  COMPILATIONDB_USE_ABSPATH=True,
+  REDNOSE_ROOT="#",
+  tools=["default"],
+  toolpath=["#rednose_repo/site_scons/site_tools"],
+)
+Export('env')
+
+
+SConscript(['SConscript'])

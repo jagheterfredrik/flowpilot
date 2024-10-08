@@ -2,11 +2,12 @@ package ai.flow.android;
 
 import ai.flow.android.sensor.CameraManager;
 import ai.flow.android.sensor.SensorManager;
+import ai.flow.android.sensor.DeviceStateManager;
 import ai.flow.android.vision.ONNXModelRunner;
 import ai.flow.android.vision.SNPEModelRunner;
 import ai.flow.android.vision.THNEEDModelRunner;
 import ai.flow.app.FlowUI;
-import ai.flow.common.ParamsInterface;
+import ai.flow.common.ParamsJNI;
 import ai.flow.common.Path;
 import ai.flow.common.transformations.Camera;
 import ai.flow.common.transformations.Model;
@@ -48,12 +49,35 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
+import static android.app.PendingIntent.FLAG_MUTABLE;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbDeviceConnection;
+import android.hardware.usb.UsbManager;
+import android.os.Bundle;
+import android.util.Log;
+
+import ai.flow.flowy.ServicePandad;
+import ai.flow.flowy.ServiceCard;
+import ai.flow.flowy.ServiceControlsd;
+import ai.flow.flowy.ServicePlannerd;
+import ai.flow.flowy.ServiceRadard;
+import ai.flow.flowy.ServiceParamsd;
+
 
 /** Launches the main android flowpilot application. */
 public class AndroidLauncher extends FragmentActivity implements AndroidFragmentApplication.Callbacks {
 	public static Map<String, SensorInterface> sensors;
 	public static Context appContext;
-	public static ParamsInterface params;
+	public static ParamsJNI params;
+
+	private static final String TAG = "AndroidLauncher";
+	private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
+    private BroadcastReceiver usbReceiver;
 
 	public void LoadIntrinsicsFromFile() {
 		File file = new File(Path.getFlowPilotRoot(), utils.F2 ? "camerainfo.medium.txt" : "camerainfo.big.txt");
@@ -104,7 +128,61 @@ public class AndroidLauncher extends FragmentActivity implements AndroidFragment
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		System.out.println("Inside launcher");
 		appContext = getApplicationContext();
+
+		usbReceiver = new BroadcastReceiver() {
+            public void onReceive(Context context, Intent intent) {
+                System.out.println("Receiving!");
+                String action = intent.getAction();
+                if (ACTION_USB_PERMISSION.equals(action)) {
+                    synchronized (this) {
+                        UsbDevice device = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+
+                        if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
+                            if(device != null) {
+                                // call method to set up device communication
+                                UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
+                                UsbDeviceConnection usbDeviceConnection = usbManager.openDevice(device);
+                                Log.d(TAG, "permission granted for serial "+usbDeviceConnection.getSerial());
+                                ServicePandad.start(getApplicationContext(), usbDeviceConnection.getFileDescriptor());
+                            }
+                        }
+                        else {
+                            Log.d(TAG, "permission denied for device " + device);
+                        }
+                    }
+                }
+            }
+        };
+
+        UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
+        Intent intent = new Intent(ACTION_USB_PERMISSION);
+        intent.setPackage(this.getPackageName());
+        PendingIntent permissionIntent = PendingIntent.getBroadcast(this, 0, intent, FLAG_MUTABLE);
+
+        IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
+        registerReceiver(usbReceiver, filter, Context.RECEIVER_EXPORTED);
+        HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
+        for (UsbDevice usbDevice : deviceList.values())
+        {
+            manager.requestPermission(usbDevice, permissionIntent);
+        }
+
+		ServiceCard.prepare(this);
+		ServiceCard.start(this, "");
+
+		ServiceControlsd.prepare(this);
+		ServiceControlsd.start(this, "");
+
+		ServicePlannerd.prepare(this);
+		ServicePlannerd.start(this, "");
+
+		ServiceRadard.prepare(this);
+		ServiceRadard.start(this, "");
+
+		ServiceParamsd.prepare(this);
+		ServiceParamsd.start(this, "");
 
 		// set environment variables from intent extras.
 		Bundle bundle = getIntent().getExtras();
@@ -124,6 +202,7 @@ public class AndroidLauncher extends FragmentActivity implements AndroidFragment
 		} catch (ErrnoException e) {
 			throw new RuntimeException(e);
 		}
+		System.out.println("Inside launcher 1");
 
 		Window activity = getWindow();
 		HardwareManager androidHardwareManager = new AndroidHardwareManager(activity);
@@ -131,38 +210,45 @@ public class AndroidLauncher extends FragmentActivity implements AndroidFragment
 		activity.setSustainedPerformanceMode(true);
 		activity.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-		params = ParamsInterface.getInstance();
+		params = new ParamsJNI();
 
 		TelephonyManager telephonyManager = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
 		String dongleID = "";
 		if (telephonyManager != null) {
 			dongleID = Settings.Secure.getString(appContext.getContentResolver(), Settings.Secure.ANDROID_ID);
 		}
+		System.out.println("Inside launcher 2");
 
 		// populate device specific info.
 		params.put("DongleId", dongleID);
 		params.put("DeviceManufacturer", Build.MANUFACTURER);
 		params.put("DeviceModel", Build.MODEL);
+		System.out.println("Inside launcher 2.5");
 
-		utils.F2 = !params.getBool("F3");
+		utils.F2 = false;//!params.getBool("F3");
+		System.out.println("Inside launcher 2.6");
 
 		// get camera intrinsics from file if they exist
 		LoadIntrinsicsFromFile();
+		System.out.println("Inside launcher 3");
 
 		AndroidApplicationConfiguration configuration = new AndroidApplicationConfiguration();
 		CameraManager cameraManager, cameraManagerWide = null;
 		SensorManager sensorManager = new SensorManager(appContext, 100);
+		DeviceStateManager deviceStateManager = new DeviceStateManager(2);
 		cameraManager = new CameraManager(getApplication().getApplicationContext(), utils.F2 || Camera.FORCE_TELE_CAM_F3 ? Camera.CAMERA_TYPE_ROAD : Camera.CAMERA_TYPE_WIDE);
 		CameraManager finalCameraManager = cameraManager; // stupid java
 		sensors = new HashMap<String, SensorInterface>() {{
 			put("roadCamera", finalCameraManager);
 			put("wideRoadCamera", finalCameraManager); // use same camera until we move away from wide camera-only mode.
 			put("motionSensors", sensorManager);
+			put("deviceState", deviceStateManager);
 		}};
 
 		int pid = Process.myPid();
 
 		String modelPath = Path.getModelDir();
+		System.out.println("Inside launcher 4");
 
 		ModelRunner model = null;
 		boolean useGPU = true; // always use gpus on android phones.
@@ -193,23 +279,26 @@ public class AndroidLauncher extends FragmentActivity implements AndroidFragment
 				startService(intent);*/
 				break;
 		}
+		System.out.println("Inside launcher 5");
 
 		ModelExecutor modelExecutor;
 		if (utils.Runner == utils.USE_MODEL_RUNNER.EXTERNAL_TINYGRAD)
 			modelExecutor = new ModelExecutorExternal();
 		else
 			modelExecutor = utils.F2 ? new ModelExecutorF2(model) : new ModelExecutorF3(model);
+		System.out.println("Inside launcher6");
 		Launcher launcher = new Launcher(sensors, modelExecutor);
 
 		ErrorReporter ACRAreporter = ACRA.getErrorReporter();
 		ACRAreporter.putCustomData("DongleId", dongleID);
 		ACRAreporter.putCustomData("AndroidAppVersion", ai.flow.app.BuildConfig.VERSION_NAME);
-		ACRAreporter.putCustomData("FlowpilotVersion", params.getString("Version"));
+		// ACRAreporter.putCustomData("FlowpilotVersion", params.getString("Version"));
 		ACRAreporter.putCustomData("VersionMisMatch", checkVersionMisMatch().toString());
 
-		ACRAreporter.putCustomData("GitCommit", params.getString("GitCommit"));
-		ACRAreporter.putCustomData("GitBranch", params.getString("GitBranch"));
-		ACRAreporter.putCustomData("GitRemote", params.getString("GitRemote"));
+		// ACRAreporter.putCustomData("GitCommit", params.getString("GitCommit"));
+		// ACRAreporter.putCustomData("GitBranch", params.getString("GitBranch"));
+		// ACRAreporter.putCustomData("GitRemote", params.getString("GitRemote"));
+		System.out.println("Inside launcher 7");
 
 		MainFragment fragment = new MainFragment(new FlowUI(launcher, androidHardwareManager, pid));
 		cameraManager.setLifeCycleFragment(fragment);
@@ -239,7 +328,7 @@ public class AndroidLauncher extends FragmentActivity implements AndroidFragment
 
 	private Boolean checkVersionMisMatch() {
 		// check version mismatch between android app and github repo project.
-		if (!params.getString("Version").equals(ai.flow.app.BuildConfig.VERSION_NAME)) {
+		if (!params.get("Version").equals(ai.flow.app.BuildConfig.VERSION_NAME)) {
 			Toast.makeText(appContext, "WARNING: App version mismatch detected. Make sure you are using compatible versions of apk and github repo.", Toast.LENGTH_LONG).show();
 			return true;
 		}

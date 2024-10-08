@@ -16,7 +16,7 @@ import java.util.Map;
 public class Launcher {
     public ModelExecutor modeld;
     public Map<String, SensorInterface> sensors;
-    public FlowInitd flowInitd = new FlowInitd();
+    // public FlowInitd flowInitd = new FlowInitd();
     public ParamsInterface params = ParamsInterface.getInstance();
     SensorInterface cameraManager;
 
@@ -41,7 +41,7 @@ public class Launcher {
             sensors.get(sensorName).stop();
         }
         modeld.dispose();
-        flowInitd.send(FlowInitd.SIGSTOP);
+        // flowInitd.send(FlowInitd.SIGSTOP);
     }
 
     public void startAllD() {

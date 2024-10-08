@@ -117,6 +117,7 @@ def thermald_thread(end_event, hw_queue):
   fan_controller = None
 
   while not end_event.is_set():
+    print("THERMALD HERE!")
     sm.update(PANDA_STATES_TIMEOUT)
 
     pandaStates = sm['pandaStates']

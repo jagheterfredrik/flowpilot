@@ -5,9 +5,10 @@ import static ai.flow.common.utils.getBoolEnvVar;
 public abstract class ParamsInterface {
 
     public static ParamsInterface getInstance() {
-        if (getBoolEnvVar("USE_PARAMS_NATIVE"))
-            return new Params();
-        return new ParamsClient();
+        return new ParamsJNI();
+        // if (getBoolEnvVar("USE_PARAMS_NATIVE"))
+        //     return new Params();
+        // return new ParamsClient();
     }
 
     public void putInt(String key, int value){}

@@ -2,7 +2,7 @@ package ai.flow.app;
 
 import ai.flow.app.helpers.GifDecoder;
 import ai.flow.app.helpers.Utils;
-import ai.flow.common.ParamsInterface;
+import ai.flow.common.ParamsJNI;
 import ai.flow.common.Path;
 import ai.flow.common.transformations.Camera;
 import ai.flow.common.utils;
@@ -75,7 +75,7 @@ public class OnRoadScreen extends ScreenAdapter {
             .policyLearning(LearningPolicy.FIRST_LOOP)
             .build();
     FlowUI appContext;
-    ParamsInterface params = ParamsInterface.getInstance();
+    ParamsJNI params = new ParamsJNI();
     // For camera frame receiving
     Pixmap pixelMap;
     Texture texture;
@@ -327,6 +327,9 @@ public class OnRoadScreen extends ScreenAdapter {
         this.appContext = appContext;
 
         PrepareDebugReader();
+        System.out.println("ON ROAD IS ON ROAD BABY");
+        params.remove("FirmwareQueryDone");
+        params.putBool("IsOnroad", true);
 
         soundAlerts = new HashMap<AudibleAlert, Sound>() {{
             put(AudibleAlert.ENGAGE, appContext.engageSound);
@@ -383,7 +386,7 @@ public class OnRoadScreen extends ScreenAdapter {
         DateTimeFormatter f = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(Locale.US);
         dateLabel = new Label(LocalDateTime.now().format(f),  appContext.skin, "default-font-30", "white");
 
-        String version = params.exists("Version") ? "flowpilot v" + params.getString("Version") : "";
+        String version = params.exists("Version") ? "flowpilot v" + params.get("Version") : "";
         vesrionLabel = new Label(version,  appContext.skin, "default-font-30", "white");
         offRoadRootTable.add(dateLabel).align(Align.topLeft).padTop(15);
         offRoadRootTable.add(vesrionLabel).padTop(15).align(Align.topRight);
@@ -414,7 +417,7 @@ public class OnRoadScreen extends ScreenAdapter {
         velocityLabel.setColor(0.5f, 1f, 0.5f, 1f);
         velocityUnitLabel = new Label("", appContext.skin, "default-font", "white");
         velocityUnitLabel.setColor(0.5f, 1f, 0.5f, 1f);
-        isMetric = params.existsAndCompare("IsMetric", true);
+        isMetric = params.getBool("IsMetric");
 
         alertText1 = new Label("Flowpilot Unavailable", appContext.skin, "default-font-bold-med", "white");
         alertText2 = new Label("Waiting for controls to start", appContext.skin, "default-font", "white");

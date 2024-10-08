@@ -1,6 +1,6 @@
 package ai.flow.sensor.camera;
 
-import ai.flow.common.ParamsInterface;
+import ai.flow.common.ParamsJNI;
 import ai.flow.common.transformations.Camera;
 import ai.flow.common.transformations.RGB2YUV;
 import ai.flow.definitions.Definitions;
@@ -40,7 +40,7 @@ public class CameraManager extends SensorInterface implements Runnable {
     public MsgFrameBuffer msgFrameBuffer;
     public Mat frame, frameProcessed, frameCrop, framePadded;
     public int frameID = 0;
-    public ParamsInterface params = ParamsInterface.getInstance();
+    public ParamsJNI params = new ParamsJNI();
     public String frameDataTopic = null;
     public String frameBufferTopic = null;
     public String cameraParamName = null;
