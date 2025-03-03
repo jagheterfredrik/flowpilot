@@ -1,4 +1,5 @@
 import crcmod
+import copy
 from selfdrive.car.hyundai.values import CAR, CHECKSUM, CAMERA_SCC_CAR
 
 hyundai_checksum = crcmod.mkCrcFun(0x11D, initCrc=0xFD, rev=False, xorOut=0xdf)
@@ -157,6 +158,12 @@ def create_lkas11_no_lkas_eq(packer, frame, car_fingerprint, apply_steer, steer_
 
   return packer.make_can_msg("LKAS11", 0, values)
 
+def create_clu11(packer, frame, bus, clu11, button, speed):
+  values = clu11
+  values["CF_Clu_CruiseSwState"] = button
+  values["CF_Clu_Vanz"] = speed
+  values["CF_Clu_AliveCnt1"] = frame
+  return packer.make_can_msg("CLU11", bus, values)
 
 def create_clu11(packer, frame, clu11, button):
   values = clu11

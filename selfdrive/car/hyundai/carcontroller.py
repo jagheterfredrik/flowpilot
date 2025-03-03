@@ -124,8 +124,6 @@ class CarController:
 
     self.apply_steer_last = apply_steer
 
-    clu11_speed = CS.out.vEgo * 2.23694 # convert to MS -> MPH
-
     # accel + longitudinal
     accel = clip(actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
     #stopping = actuators.longControlState == LongCtrlState.stopping
@@ -134,6 +132,14 @@ class CarController:
     # HUD messages
     sys_warning, sys_state, left_lane_warning, right_lane_warning = process_hud_alert(CC.enabled, self.car_fingerprint,
                                                                                       hud_control)
+    
+    #Clu11 for MDPS
+    clu11_speed = CS.clu11["CF_Clu_Vanz"]
+    enabled_speed = 32 if CS.is_set_speed_in_mph else 60
+    if clu11_speed > enabled_speed:
+      enabled_speed = clu11_speed
+
+    clu11_speed = CS.out.vEgo * 2.23694 # convert to MS -> MPH
 
     can_sends = []
 
