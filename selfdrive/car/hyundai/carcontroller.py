@@ -89,7 +89,6 @@ class CarController:
     self.car_fingerprint = CP.carFingerprint
     self.last_button_frame = 0
     self.lkas11_cnt = 0
-    self.mdpsBus = 0
     self.prevent_heavy_steer_timer = 0
 
     self.speed_ratios =  [0.0, 1.0,  1.05,  1.1,  1.15,  1.2,  1.25,  1.3]
@@ -172,7 +171,7 @@ class CarController:
       can_sends.append(hyundaican.create_lkas11_no_lkas_eq(self.packer, self.frame, self.car_fingerprint, apply_steer, lat_active,
                                               torque_fault, sys_warning, sys_state, CC.enabled,
                                               hud_control.leftLaneVisible, hud_control.rightLaneVisible,
-                                              left_lane_warning, right_lane_warning))
+                                              left_lane_warning, right_lane_warning, 2))
     else:
       can_sends.append(hyundaican.create_lkas11(self.packer, self.frame, self.car_fingerprint, apply_steer, lat_active,
                                                 torque_fault, CS.lkas11, sys_warning, sys_state, CC.enabled,

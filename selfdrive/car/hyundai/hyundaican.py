@@ -115,7 +115,7 @@ def create_lkas11(packer, frame, car_fingerprint, apply_steer, steer_req,
 def create_lkas11_no_lkas_eq(packer, frame, car_fingerprint, apply_steer, steer_req,
                   torque_fault, sys_warning, sys_state, enabled,
                   left_lane, right_lane,
-                  left_lane_depart, right_lane_depart):
+                  left_lane_depart, right_lane_depart, bus):
   values = {
     "CF_Lkas_LdwsSysState": sys_state,
     "CF_Lkas_SysWarning": 3 if sys_warning else 0,
@@ -156,7 +156,7 @@ def create_lkas11_no_lkas_eq(packer, frame, car_fingerprint, apply_steer, steer_
 
   values["CF_Lkas_Chksum"] = checksum
 
-  return packer.make_can_msg("LKAS11", 0, values)
+  return packer.make_can_msg("LKAS11", bus, values)
 
 def create_clu11(packer, frame, bus, clu11, button, speed):
   values = clu11

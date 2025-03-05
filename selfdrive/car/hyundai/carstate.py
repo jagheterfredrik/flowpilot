@@ -24,9 +24,7 @@ class CarState(CarStateBase):
     self.cruise_buttons = 0
     self.main_buttons = 0
     self.mdps_error_cnt = 0
-    self.mdps_bus = CP.mdpsBus
-    self.sas_bus = CP.sasBus
-
+    self.mdpsBus = CP.mdpsBus
 
     self.gear_msg_canfd = "GEAR_ALT_2" if CP.flags & HyundaiFlags.CANFD_ALT_GEARS_2 else \
                           "GEAR_ALT" if CP.flags & HyundaiFlags.CANFD_ALT_GEARS else \
@@ -310,22 +308,14 @@ class CarState(CarStateBase):
     ]
     if CP.mdpsBus == 0:
       signals += [
-        ("CR_Mdps_StrColTq", "MDPS12", 0),
-        ("CF_Mdps_Def", "MDPS12", 0),
-        ("CF_Mdps_ToiActive", "MDPS12", 0),
-        ("CF_Mdps_ToiUnavail", "MDPS12", 0),
-        ("CF_Mdps_ToiFlt", "MDPS12", 0),
-        ("CF_Mdps_MsgCount2", "MDPS12", 0),
-        ("CF_Mdps_Chksum2", "MDPS12", 0),
-        ("CF_Mdps_SErr", "MDPS12", 0),
-        ("CR_Mdps_StrTq", "MDPS12", 0),
-        ("CF_Mdps_FailStat", "MDPS12", 0),
-        ("CR_Mdps_OutTq", "MDPS12", 0),
-        ("CR_Mdps_DrvTq", "MDPS11", 0),
+        ("CR_Mdps_StrColTq", "MDPS12"),
+        ("CF_Mdps_ToiActive", "MDPS12"),
+        ("CF_Mdps_ToiUnavail", "MDPS12"),
+        ("CF_Mdps_ToiFlt", "MDPS12"),
+        ("CR_Mdps_OutTq", "MDPS12"),
       ]
       checks += [
         ("MDPS12", 50),
-        ("MDPS11", 100),
       ]
     if CP.sasBus == 0:
       signals += [
@@ -333,9 +323,8 @@ class CarState(CarStateBase):
         ("SAS_Speed", "SAS11"),
       ]
       checks += [
-        ("SAS11", 100)
+        ("SAS11", 100),
       ]
-
     checks = [
       # address, frequency
       ("TCS13", 50),
@@ -390,6 +379,29 @@ class CarState(CarStateBase):
   def get_cam_can_parser(CP):
     if CP.carFingerprint in CANFD_CAR:
       return CarState.get_cam_can_parser_canfd(CP)
+
+    signals = []
+    checks = []
+    if CP.mdpsBus == 2:
+      signals += [
+        ("CR_Mdps_StrColTq", "MDPS12"),
+        ("CF_Mdps_ToiActive", "MDPS12"),
+        ("CF_Mdps_ToiUnavail", "MDPS12"),
+        ("CF_Mdps_ToiFlt", "MDPS12"),
+        ("CR_Mdps_OutTq", "MDPS12"),
+      ]
+      checks += [
+        ("MDPS12", 50),
+      ]
+    if CP.sasBus == 2:
+      signals += [
+        ("SAS_Angle", "SAS11"),
+        ("SAS_Speed", "SAS11"),
+      ]
+      checks += [
+        ("SAS11", 100),
+      ]
+    
     if not Params().get_bool("HKGNoLKAS"):
       signals += [
         # signal_name, signal_address
