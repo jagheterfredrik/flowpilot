@@ -131,14 +131,6 @@ class CarController:
     # HUD messages
     sys_warning, sys_state, left_lane_warning, right_lane_warning = process_hud_alert(CC.enabled, self.car_fingerprint,
                                                                                       hud_control)
-    
-    #Clu11 for MDPS
-    clu11_speed = CS.clu11["CF_Clu_Vanz"]
-    enabled_speed = 32 if CS.is_set_speed_in_mph else 60
-    if clu11_speed > enabled_speed:
-      enabled_speed = clu11_speed
-
-    clu11_speed = CS.out.vEgo * 2.23694 # convert to MS -> MPH
 
     can_sends = []
 
@@ -149,6 +141,12 @@ class CarController:
       self.angle_limit_counter += 1
     else:
       self.angle_limit_counter = 0
+
+    #Clu11 for MDPS
+    clu11_speed = CS.clu11["CF_Clu_Vanz"]
+    enabled_speed = 38 if CS.clu11["CF_Clu_SPEED_UNIT"] == 1 else 60
+    if clu11_speed > enabled_speed:
+      enabled_speed = clu11_speed
 
     # Cut steer actuation bit for two frames and hold torque with induced temporary fault
     torque_fault = CC.latActive and self.angle_limit_counter > MAX_ANGLE_FRAMES
@@ -177,7 +175,9 @@ class CarController:
                                                 torque_fault, CS.lkas11, sys_warning, sys_state, CC.enabled,
                                                 hud_control.leftLaneVisible, hud_control.rightLaneVisible,
                                                 left_lane_warning, right_lane_warning))
-    
+      
+    if self.frame % 2 and CS.mdps_bus == 2: # send clu11 to mdps if it is not on bus 0
+      can_sends.append(hyundaican.create_clu11(self.packer, self.frame, CS.mdps_bus, CS.clu11, Buttons.NONE, enabled_speed))
 
     # 20 Hz LFA MFA message
     if self.frame % 5 == 0 and self.CP.flags & HyundaiFlags.SEND_LFA.value:

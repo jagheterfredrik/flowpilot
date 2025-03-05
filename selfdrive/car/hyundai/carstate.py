@@ -24,7 +24,8 @@ class CarState(CarStateBase):
     self.cruise_buttons = 0
     self.main_buttons = 0
     self.mdps_error_cnt = 0
-    self.mdpsBus = CP.mdpsBus
+    self.mdps_bus = CP.mdpsBus
+    self.sas_bus = CP.sasBus
 
     self.gear_msg_canfd = "GEAR_ALT_2" if CP.flags & HyundaiFlags.CANFD_ALT_GEARS_2 else \
                           "GEAR_ALT" if CP.flags & HyundaiFlags.CANFD_ALT_GEARS else \
