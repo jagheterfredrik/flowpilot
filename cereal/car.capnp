@@ -502,6 +502,8 @@ struct CarParams {
     safetyParam2DEPRECATED @2 :UInt32;
   }
 
+  mdpsBus @73: Int8;
+
   struct LateralParams {
     torqueBP @0 :List(Int32);
     torqueV @1 :List(Int32);
