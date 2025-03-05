@@ -41,7 +41,7 @@ if pgrep -x "flowinit" > /dev/null
         exit
     else
         # start a tmux pane
-        scons && flowinit
+        scons -j$(nproc) && flowinit
         # tmux new-session -d -s "flowpilot" "scons && flowinit"
         # tmux attach -t flowpilot
 fi
