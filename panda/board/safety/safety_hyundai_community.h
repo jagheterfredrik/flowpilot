@@ -10,6 +10,7 @@ int HKG_mdps_bus = -1;
 int HKG_scc_bus = -1;
 
 bool HKG_LCAN_on_bus1 = false;
+bool HKG_LCAN_on_bus2 = false;
 bool HKG_forward_bus1 = false;
 bool HKG_forward_obd = false;
 bool HKG_forward_bus2 = true;
