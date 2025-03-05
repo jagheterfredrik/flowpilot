@@ -58,6 +58,8 @@ class CarState(CarStateBase):
   def update(self, cp, cp_cam):
     if self.CP.carFingerprint in CANFD_CAR:
       return self.update_canfd(cp, cp_cam)
+    cp_mdps = cp_cam if self.mdps_bus == 2 else cp
+    cp_sas = cp_cam if self.sas_bus == 2 else cp
 
     ret = car.CarState.new_message()
     cp_cruise = cp_cam if self.CP.carFingerprint in CAMERA_SCC_CAR else cp
@@ -95,16 +97,16 @@ class CarState(CarStateBase):
     ret.vEgoCluster = self.cluster_speed * speed_conv
     ret.engineRpm = cp.vl["ELECT_GEAR"]["Elect_Gear_Step"]
 
-    ret.steeringAngleDeg = cp.vl["SAS11"]["SAS_Angle"] - 27.0 # kona ev steering offset
-    ret.steeringRateDeg = cp.vl["SAS11"]["SAS_Speed"]
+    ret.steeringAngleDeg = cp_sas.vl["SAS11"]["SAS_Angle"] - 27.0 # kona ev steering offset
+    ret.steeringRateDeg = cp_sas.vl["SAS11"]["SAS_Speed"]
     ret.yawRate = cp.vl["ESP12"]["YAW_RATE"]
     ret.leftBlinker, ret.rightBlinker = self.update_blinker_from_lamp(
       50, cp.vl["CGW1"]["CF_Gway_TurnSigLh"], cp.vl["CGW1"]["CF_Gway_TurnSigRh"])
-    ret.steeringTorque = cp.vl["MDPS12"]["CR_Mdps_StrColTq"]
-    ret.steeringTorqueEps = cp.vl["MDPS12"]["CR_Mdps_OutTq"]
+    ret.steeringTorque = cp_mdps.vl["MDPS12"]["CR_Mdps_StrColTq"]
+    ret.steeringTorqueEps = cp_mdps.vl["MDPS12"]["CR_Mdps_OutTq"]
     ret.steeringPressed = self.update_steering_pressed(abs(ret.steeringTorque) > self.params.STEER_THRESHOLD, 5)
 
-    self.mdps_error_cnt += 1 if cp.vl["MDPS12"]["CF_Mdps_ToiUnavail"] != 0 else -self.mdps_error_cnt
+    self.mdps_error_cnt += 1 if cp_mdps.vl["MDPS12"]["CF_Mdps_ToiUnavail"] != 0 else -self.mdps_error_cnt
     ret.steerFaultTemporary = self.mdps_error_cnt > 100 #cp.vl["MDPS12"]["CF_Mdps_ToiUnavail"] != 0
 
     cruiseMainButton = cp.vl["CLU11"]["CF_Clu_CruiseSwMain"]
@@ -163,10 +165,10 @@ class CarState(CarStateBase):
       self.lkas11 = copy.copy(cp_cam.vl["LKAS11"])
 
     self.clu11 = copy.copy(cp.vl["CLU11"])
-    self.mdps12 = copy.copy(cp.vl["MDPS12"])
+    self.mdps12 = copy.copy(cp_mdps.vl["MDPS12"])
     self.elect = copy.copy(cp.vl["ELECT_GEAR"])
     #self.vcu = copy.copy(cp.vl["VCU_202"])
-    self.steer_state = cp.vl["MDPS12"]["CF_Mdps_ToiActive"]  # 0 NOT ACTIVE, 1 ACTIVE
+    self.steer_state = cp_mdps.vl["MDPS12"]["CF_Mdps_ToiActive"]  # 0 NOT ACTIVE, 1 ACTIVE
     self.prev_cruise_buttons = self.cruise_buttons
     self.cruise_buttons = cruiseUpDownNow
     self.main_buttons = cruiseMainButton

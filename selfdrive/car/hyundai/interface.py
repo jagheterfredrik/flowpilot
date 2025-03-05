@@ -265,8 +265,8 @@ class CarInterface(CarInterfaceBase):
     else:
       ret.enableBsm = 0x58b in fingerprint[0]
 
-    ret.mdpsBus = 2 #if 593 in fingerprint[2] else 0
-    ret.sasBus = 2 #if 688 in fingerprint[2] else 0
+    ret.mdpsBus = 2 if 593 in fingerprint[2] else 0
+    ret.sasBus = 2 if 688 in fingerprint[2] else 0
 
 
     # *** panda safety config ***
